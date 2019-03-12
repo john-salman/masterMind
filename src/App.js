@@ -78,7 +78,7 @@ class MasterMindRow extends Component {
     }
 
     feedbackCircles(feedback) {
-        let feedback_cells = this.make_cells(feedback, 1);
+        let feedback_cells = this.make_cells(feedback);
         return (
             <table>
                 <tbody className="feedback_table">
@@ -106,8 +106,8 @@ class MasterMindRow extends Component {
             <tr>
                 {this.props.row.map((circle, idx) =>
                     <MasterMindCell colIdx={idx} handleBoardClick={this.props.handleBoardClick} src={circle.color} alt={circle.colorName} />
-            )}
-            <td className="feedback_cell">{this.props.feedback ? this.feedbackCircles(this.props.feedback) : ""}</td>
+                )}
+                <td className="feedback_cell">{this.props.feedback ? this.feedbackCircles(this.props.feedback) : ""}</td>
             </tr>
         )
     }
@@ -115,21 +115,15 @@ class MasterMindRow extends Component {
 
 class MasterMindTable extends Component {
 
-    temp (x) {
-        let masterMindArray = this.props.masterMindArray;
-        let feedbackArray = this.props.feedbackArray ? this.props.feedbackArray : null;
-        return masterMindArray[x] ? <MasterMindRow idx={x} handleBoardClick={this.props.handleBoardClick} row={masterMindArray[x]} feedback={feedbackArray[x] ? feedbackArray[x] : null}/> : <td width="50px" height="50px"></td>;
-    }
-
     render() {
 
-        let totalRows = [0,1,2,3,4,5,6];
-
         console.log("Feedback Array now: ", this.props.feedbackArray);
+        let masterMindArray = this.props.masterMindArray;
+        let feedbackArray = this.props.feedbackArray ? this.props.feedbackArray : null;
 
         return (
-                    totalRows.map((current) => {
-                        return this.temp(current);
+                    masterMindArray.map((current, index) => {
+                        return current[0] !== 0 ? <MasterMindRow idx={index} handleBoardClick={this.props.handleBoardClick} row={current} feedback={feedbackArray[index] ? feedbackArray[index] : null}/> : <div className="spacer"></div>;
                     })
 
         )
@@ -170,13 +164,13 @@ class App extends Component {
     constructor(props) {
     super (props);
 
-    let currentRow = 0; // 6
+    let currentRow = 6; // 6
     let firstRow = [this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle];
 
     let code = this.createCode();
 
     this.state = {
-        mastermindArray: [firstRow], //[[], [], [], [], [], [], firstRow],
+        mastermindArray: [[0], [0], [0], [0], [0], [0], firstRow],
         feedbackArray: [],
         statusCircle: {color: emptyCircle, colorName: 'Empty circle'},
         currentRow: currentRow,
@@ -255,13 +249,13 @@ class App extends Component {
             this.setState(
                 {correct: true}
             );
-        } else if (this.state.currentRow === this.state.rowCap) { // we have filled the last row
+        } else if (this.state.currentRow === 0) { // we have filled the last row
             this.setState(
                 {lost: true}
             )
         } else { // the row didn't match and user still has tries
             newFill = 0;
-            newCRow = this.state.currentRow + 1;
+            newCRow = this.state.currentRow - 1;
             newArray[newCRow] = [this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle];
             //this.createNewRow();
         }
