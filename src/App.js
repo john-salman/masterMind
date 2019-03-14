@@ -48,6 +48,7 @@ class StatusRow extends Component {
 
 class MasterMindCell extends Component {
     render() {
+        console.log("Rendering cell with index: ", this.props.colIdx, " is colored: ", this.props.alt);
         return (
             <td key={this.props.key}>
                 <img className="large_circle"  onClick={() => this.props.handleBoardClick(this.props.colIdx)} src={this.props.src} alt={this.props.alt} />
@@ -82,26 +83,27 @@ class MasterMindRow extends Component {
         return (
             <table>
                 <tbody className="feedback_table">
-                    <tr>
-                        {
-                            feedback_cells[0].map((current) =>
-                                current
-                            )
-                        }
-                    </tr>
-                    <tr>
-                        {
-                            feedback_cells[1].map((current) =>
-                                current
-                            )
-                        }
-                    </tr>
+                <tr>
+                    {
+                        feedback_cells[0].map((current) =>
+                            current
+                        )
+                    }
+                </tr>
+                <tr>
+                    {
+                        feedback_cells[1].map((current) =>
+                            current
+                        )
+                    }
+                </tr>
                 </tbody>
             </table>
         )
     }
 
     render () {
+        console.log("Rendering row: ", this.props.idx);
         return (
             <tr>
                 {this.props.row.map((circle, idx) =>
@@ -116,8 +118,6 @@ class MasterMindRow extends Component {
 class MasterMindTable extends Component {
 
     render() {
-
-        console.log("Feedback Array now: ", this.props.feedbackArray);
         let masterMindArray = this.props.masterMindArray;
         let feedbackArray = this.props.feedbackArray ? this.props.feedbackArray : null;
 
@@ -145,6 +145,17 @@ class Palette extends Component {
   }
 }
 
+class Difficulty extends Component {
+    render() {
+        return (
+            <div className="difficulty">
+                <button onClick={() => this.props.lowerDifficulty}>Lower Difficulty?</button>
+                <button onClick={() => this.props.raiseDifficulty}>Raise Difficulty?</button>
+            </div>
+        )
+    }
+}
+
 class App extends Component {
 
     paletteColors = [
@@ -168,7 +179,6 @@ class App extends Component {
     let firstRow = [this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle];
 
     let code = this.createCode();
-
     this.state = {
         mastermindArray: [[0], [0], [0], [0], [0], [0], firstRow],
         feedbackArray: [],
@@ -182,6 +192,9 @@ class App extends Component {
 
 
     this.reset = this.reset.bind(this);
+    this.lowerDifficulty = this.lowerDifficulty.bind(this);
+    this.raiseDifficulty = this.raiseDifficulty.bind(this);
+
     this.handlePalClick = this.handlePalClick.bind(this);
     this.handleBoardClick = this.handleBoardClick.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -189,20 +202,35 @@ class App extends Component {
   }
 
   reset() {
-      let currentRow = 0;
+
       let firstRow = [this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle, this.nonFilledCircle];
+
+      let currentRow = 6;
+      let numCols = 4;
 
       let code = this.createCode();
 
-      this.setState( {
-          mastermindArray: [firstRow],
+      this.setState({
+          mastermindArray: [[0], [0], [0], [0], [0], [0], firstRow],
           feedbackArray: [],
           statusCircle: {color: emptyCircle, colorName: 'Empty circle'},
           currentRow: currentRow,
           code: code,
-          fill: 0
+          fill: 0,
+          correct: false,
+          lost: false,
+          numCols: numCols
       });
-    console.log("RESET");
+    console.log("=============================RESET=============================");
+      console.log("Here's the code you cheater: ", code);
+  }
+
+  lowerDifficulty(){
+
+  }
+
+  raiseDifficulty() {
+
   }
 
   handleClick() {
@@ -222,13 +250,14 @@ class App extends Component {
       console.log("correct/lost triggered");
       return;
     }
+    console.log('current row = ', this.state.currentRow);
     if (this.state.mastermindArray[this.state.currentRow][colIdx]['colorName'] !== 'Empty circle') {
-        console.log("color filled triggered");
+        console.log("Color filled triggered, the index: ", colIdx, " the row: ", this.state.currentRow," what is in this index: ", this.state.mastermindArray[this.state.currentRow][colIdx]['colorName'],);
         return;
       }
 
     let newRow = JSON.parse(JSON.stringify(this.state.mastermindArray[this.state.currentRow].slice()));
-    newRow[colIdx] = this.state.statusCircle;
+    newRow[colIdx] = JSON.parse(JSON.stringify(this.state.statusCircle));
 
     let newArray = JSON.parse(JSON.stringify(this.state.mastermindArray.slice()));
     newArray[this.state.currentRow] = newRow;
@@ -241,7 +270,7 @@ class App extends Component {
     let newFill = this.state.fill + 1;
 
     console.log("The fill is now: ", newFill);
-    let newCRow;
+    let newCRow = null;
     if (newFill === 4) {
         console.log("Now entering fill protected code with fill: ", this.state.fill);
 
@@ -260,11 +289,12 @@ class App extends Component {
             //this.createNewRow();
         }
     }
+    console.log("The new current row: ", newCRow);
     this.setState(
           {mastermindArray: newArray,
               fill: newFill,
               currentRow: newCRow ? newCRow: this.state.currentRow,
-              statusCircle: {color: emptyCircle, colorName: 'Empty circle'},
+              //statusCircle: {color: emptyCircle, colorName: 'Empty circle'},
           }
       );
 
@@ -301,19 +331,31 @@ class App extends Component {
         let feedbackRow = [];
         console.log("The row as it be: ", row);
         let numCorrect = 0;
+        let codeCopy = JSON.parse(JSON.stringify(this.state.code));
+        let frevIndex = 3;
+
         row.forEach((current, index) => {
             if (current['colorName'] === this.state.code[index]['colorName']) { // add a red circle
                 numCorrect++;
-                feedbackRow[index] = {color: red, colorName: 'red'};
+                feedbackRow[frevIndex--] = {color: red, colorName: 'red'};
+                codeCopy[index] = null;
                 console.log("Index ", index, " matches code exactly");
-            } else if (this.state.code.find(obj => obj['colorName'] === current['colorName']) !== undefined){ // add a skeleton circle
-                feedbackRow[index] = this.nonFilledCircle;
+            } 
+        });
+
+        row.forEach((current, index) => {
+            if (codeCopy.find(obj => obj !== null && obj['colorName'] === current['colorName']) !== undefined){ // add a skeleton circle
+                feedbackRow[frevIndex--] = this.nonFilledCircle;
+                codeCopy[index] = null;
                 console.log("Index ", index, " has a color of the code");
-            } else {// do nothing
-                feedbackRow[index] = null;
-                console.log("Index ", index, " doesn't have anything right");
             }
         });
+
+        for (let i = 0; i < 4; i++) {
+            feedbackRow[i] = feedbackRow[i] ? feedbackRow[i] : null;
+        }
+
+
         let newFeedback = JSON.parse(JSON.stringify(this.state.feedbackArray.slice()));
         newFeedback[this.state.currentRow] = feedbackRow;
 
@@ -326,32 +368,55 @@ class App extends Component {
 
 
   render() {
-    return (
-        <div className="outter">
-            <div className="inner">
-                <div className="Mastermind">
-                    <StatusRow reset={this.reset} statusCircle={this.state.statusCircle}/>
-                    <div style={{height: "100 %"}}>&nbsp;</div>
-                    <table className="board_table">
-                        <tbody>
-                        {
-                            <MasterMindTable
-                                handleBoardClick={this.handleBoardClick}
-                                masterMindArray={this.state.mastermindArray}
-                                feedbackArray={this.state.feedbackArray}
-                            />
-                        }
-                        </tbody>
-                    </table>
-                    <Palette
-                        handlePalClick={this.handlePalClick}
-                        paletteColors={this.paletteColors}
-                    />
-
-                </div>
+        if (this.state.correct) {
+            return (
+                <div className="victory-screen">
+                    <p>
+                        YOU WON :D
+                        <button onClick={this.reset}>RESET?
+                        </button>
+                    </p>
             </div>
-        </div>
-    )
+            )
+        } else if (this.state.lost) {
+            return (
+                <div className="defeat-screen">
+                    <p>
+                        YOU LOST D:
+                        <button onClick={this.reset}>RESET?
+                        </button>
+                    </p>
+                </div>
+            )
+        } else {
+            return (
+                <div className="outter">
+                    <div className="inner">
+                        <div className="Mastermind">
+                            <StatusRow reset={this.reset} statusCircle={this.state.statusCircle}/>
+                            <div style={{height: "100 %"}}>&nbsp;</div>
+                            <table className="board_table">
+                                <tbody>
+                                {
+                                    <MasterMindTable
+                                        handleBoardClick={this.handleBoardClick}
+                                        masterMindArray={this.state.mastermindArray}
+                                        feedbackArray={this.state.feedbackArray}
+                                    />
+                                }
+                                </tbody>
+                            </table>
+                            <Palette
+                                handlePalClick={this.handlePalClick}
+                                paletteColors={this.paletteColors}
+                            />
+
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
   }
 }
 
