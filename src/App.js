@@ -51,7 +51,7 @@ class MasterMindCell extends Component {
         console.log("Rendering cell with index: ", this.props.colIdx, " is colored: ", this.props.alt);
         return (
             <td key={this.props.key}>
-                <img className="large_circle"  onClick={() => this.props.handleBoardClick(this.props.colIdx)} src={this.props.src} alt={this.props.alt} />
+                <img className="large_circle"  onClick={() => this.props.handleBoardClick(this.props.rowIdx, this.props.colIdx)} src={this.props.src} alt={this.props.alt} />
             </td>
         )
     }
@@ -107,7 +107,7 @@ class MasterMindRow extends Component {
         return (
             <tr>
                 {this.props.row.map((circle, idx) =>
-                    <MasterMindCell colIdx={idx} handleBoardClick={this.props.handleBoardClick} src={circle.color} alt={circle.colorName} />
+                    <MasterMindCell rowIdx={this.props.idx} colIdx={idx} handleBoardClick={this.props.handleBoardClick} src={circle.color} alt={circle.colorName} />
                 )}
                 <td className="feedback_cell">{this.props.feedback ? this.feedbackCircles(this.props.feedback) : ""}</td>
             </tr>
@@ -245,22 +245,22 @@ class App extends Component {
     )
   }
 
-  handleBoardClick(colIdx) {
+  handleBoardClick(rowIdx, colIdx) {
     if (this.state.correct || this.state.lost) {
       console.log("correct/lost triggered");
       return;
     }
     console.log('current row = ', this.state.currentRow);
-    if (this.state.mastermindArray[this.state.currentRow][colIdx]['colorName'] !== 'Empty circle') {
+    if (this.state.mastermindArray[rowIdx][colIdx]['colorName'] !== 'Empty circle') {
         console.log("Color filled triggered, the index: ", colIdx, " the row: ", this.state.currentRow," what is in this index: ", this.state.mastermindArray[this.state.currentRow][colIdx]['colorName'],);
         return;
       }
 
-    let newRow = JSON.parse(JSON.stringify(this.state.mastermindArray[this.state.currentRow].slice()));
+    let newRow = JSON.parse(JSON.stringify(this.state.mastermindArray[rowIdx].slice()));
     newRow[colIdx] = JSON.parse(JSON.stringify(this.state.statusCircle));
 
     let newArray = JSON.parse(JSON.stringify(this.state.mastermindArray.slice()));
-    newArray[this.state.currentRow] = newRow;
+    newArray[rowIdx] = newRow;
 
     /*
     * We should probably make a new fill.
@@ -278,7 +278,7 @@ class App extends Component {
             this.setState(
                 {correct: true}
             );
-        } else if (this.state.currentRow === 0) { // we have filled the last row
+        } else if (rowIdx === 0) { // we have filled the last row
             this.setState(
                 {lost: true}
             )
@@ -296,7 +296,8 @@ class App extends Component {
               currentRow: newCRow ? newCRow: this.state.currentRow,
               //statusCircle: {color: emptyCircle, colorName: 'Empty circle'},
           }
-      );
+      )
+
 
 
   }
@@ -333,7 +334,7 @@ class App extends Component {
         let numCorrect = 0;
         let codeCopy = JSON.parse(JSON.stringify(this.state.code));
         let frevIndex = 3;
-
+        console.log("The code copy before first loop: ", JSON.parse(JSON.stringify(codeCopy)));
         row.forEach((current, index) => {
             if (current['colorName'] === this.state.code[index]['colorName']) { // add a red circle
                 numCorrect++;
@@ -342,16 +343,19 @@ class App extends Component {
                 console.log("Index ", index, " matches code exactly");
             } 
         });
+      console.log("The code copy after first loop: ", JSON.parse(JSON.stringify(codeCopy)));
 
-        row.forEach((current, index) => {
+      row.forEach((current, index) => {
+          console.log("current: ", current, " index: ", index);
             if (codeCopy.find(obj => obj !== null && obj['colorName'] === current['colorName']) !== undefined){ // add a skeleton circle
                 feedbackRow[frevIndex--] = this.nonFilledCircle;
                 codeCopy[index] = null;
                 console.log("Index ", index, " has a color of the code");
             }
         });
+      console.log("The code copy after second loop: ", JSON.parse(JSON.stringify(codeCopy)));
 
-        for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++) {
             feedbackRow[i] = feedbackRow[i] ? feedbackRow[i] : null;
         }
 

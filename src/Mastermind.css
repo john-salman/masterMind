@@ -71,6 +71,8 @@
 }
 
 .feedback_cell {
+    width: 82px;
+    height: 59px;
     padding-left: 32px;
 }
 
